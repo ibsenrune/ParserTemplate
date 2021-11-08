@@ -17,8 +17,6 @@ type Expression =
 and Value =
   | ParenExpression of Expression
   | Identifier of string
-  | Constant of Literal
-and Literal =
   | Integer of int
 
 (* Parsers *)
@@ -26,7 +24,7 @@ let (expression : Parser<Expression>), expressionImplRef = createParserForwarded
 let ws1 : Parser<unit> = many1 (pchar ' ' <|> pchar '\t') |>> ignore
 let ws : Parser<unit> = ws1 <|> preturn ()
 let str_ws s = pstring s >>. ws
-let numeral : Parser<Literal> =
+let integer : Parser<Value> =
   numberLiteral (NumberLiteralOptions.AllowFraction ||| NumberLiteralOptions.AllowMinusSign) "number"
   |>> function
     | _ as i when i.IsInteger -> Integer(int i.String)
@@ -39,7 +37,7 @@ let pIdentifier : Parser<Value> =
 let value : Parser<Value> =
   choice [
     pIdentifier
-    numeral |>> Constant
+    integer
   ]
 let valueExpression : Parser<Expression> =
   value .>> ws |>> Value
@@ -69,5 +67,5 @@ let output = function
   
 [<EntryPoint>]
 let main argv =
-  test expression "21 + foo * 3" |> output
+  test expression "20 + (21 + foo) * 3" |> output
   0 // return an integer exit code
