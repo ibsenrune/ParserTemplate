@@ -15,12 +15,10 @@ type Expression =
   | Power of Expression * Expression
   | Value of Value
 and Value =
-  | ParenExpression of Expression
   | Identifier of string
   | Integer of int
 
 (* Parsers *)
-let (expression : Parser<Expression>), expressionImplRef = createParserForwardedToRef<Expression,unit>()
 let ws1 : Parser<unit> = many1 (pchar ' ' <|> pchar '\t') |>> ignore
 let ws : Parser<unit> = ws1 <|> preturn ()
 let str_ws s = pstring s >>. ws
@@ -43,6 +41,7 @@ let valueExpression : Parser<Expression> =
   value .>> ws |>> Value
 
 (* Expressions parser *)
+let (expression : Parser<Expression>), expressionImplRef = createParserForwardedToRef<Expression,unit>()
 let opp = new OperatorPrecedenceParser<_,unit,unit>()
 let expr = opp.ExpressionParser
 opp.TermParser <- valueExpression <|> between (str_ws "(") (str_ws ")") expr
