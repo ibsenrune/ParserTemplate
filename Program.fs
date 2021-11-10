@@ -21,22 +21,18 @@ and Value =
 (* Parsers *)
 let ws1 : Parser<unit> = many1 (pchar ' ' <|> pchar '\t') |>> ignore
 let ws : Parser<unit> = ws1 <|> preturn ()
-let str_ws s = pstring s >>. ws
+let str_ws s = pstring s .>> ws
 let integer : Parser<Value> =
-  numberLiteral (NumberLiteralOptions.AllowFraction ||| NumberLiteralOptions.AllowMinusSign) "number"
-  |>> function
-    | _ as i when i.IsInteger -> Integer(int i.String)
-    | _ -> failwith "fail - should use failing parser"
+  let number : Parser<NumberLiteral> = 
+    numberLiteral (NumberLiteralOptions.AllowFraction ||| NumberLiteralOptions.AllowMinusSign) "number"
+  let isInteger (i : NumberLiteral) = if i.IsInteger then preturn (System.Int32.Parse(i.String)) else fail (sprintf "Not an integer: %s" i.String)
+  number >>=? isInteger |>> Integer
 let parenthesized p = (p .>> ws) |> between (pchar '(' .>> ws) (pchar ')' .>> ws)
 let pIdentifier : Parser<Value> =
   let isIdentifierFirstChar c = isLetter c || c = '_'
   let isIdentifierChar c = isLetter c || isDigit c || c = '_'
   (many1Satisfy2L isIdentifierFirstChar isIdentifierChar "identifier") .>> ws |>> Identifier
-let value : Parser<Value> =
-  choice [
-    pIdentifier
-    integer
-  ]
+let value : Parser<Value> = pIdentifier <|> integer
 let valueExpression : Parser<Expression> =
   value .>> ws |>> Value
 
